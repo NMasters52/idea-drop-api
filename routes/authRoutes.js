@@ -1,5 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
+import { generateToken } from "../utils/generateToken.js";
 
 const router = express.Router();
 
@@ -28,8 +29,22 @@ router.post("/register", async (req, res, next) => {
     // made it past all the checks. This user hasnt been created before and was successful
     const user = await User.create({ name, email, password });
 
+    // create tokens
+    const payload = { userId: user._id.toString() };
+    const accessToken = await generateToken(payload, "1m");
+    const refreshToken = await generateToken(payload, "30d");
+
+    // Set Refresh Cookie to HTTP Only
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
     //throw a successful status and show user information. Notice how we didnt pass User in the json. We dont want the password or the created @ in the public eye
     res.status(201).json({
+      accessToken,
       user: {
         id: user._id,
         name: user.name,
