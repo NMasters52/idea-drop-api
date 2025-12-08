@@ -1,5 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
+import { jwtVerify } from "jose";
+import { JWT_SECRET } from "../utils/getJwtSecret.js";
 import { generateToken } from "../utils/generateToken.js";
 
 const router = express.Router();
@@ -123,6 +125,47 @@ router.post("/logout", (req, res) => {
   });
 
   res.status(200).json({ message: "Logged out successfully" });
+});
+
+// @route           POST api/auth/refresh
+// @description     Generate New access from refresh token
+// @access          Public (needs valid refresh token in cookie)
+router.post("/refresh", async (res, req, next) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    console.log("Refreshing Token...");
+
+    if (!token) {
+      res.status(401);
+      throw new Error("No refresh token");
+    }
+
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+
+    const user = await User.findById(payload.userId);
+
+    if (!user) {
+      res.status(401);
+      throw new Error("No User");
+    }
+
+    const newAccessToken = await generateToken(
+      { userId: user._id.toString() },
+      "1m"
+    );
+
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    res.status(401);
+    next(err);
+  }
 });
 
 export default router;
