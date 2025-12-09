@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import Idea from "../models/Idea.js";
 import mongoose from "mongoose";
+import { proctect } from "../middleware/authMiddleware.js";
 
 // @route               GET /api/ideas
 // @description         Get all ideas
@@ -50,7 +51,7 @@ router.get("/:id", async (req, res, next) => {
 // @route               POST /api/ideas
 // @description         Create new idea
 // @access              Public
-router.post("/", async (req, res) => {
+router.post("/", proctect, async (req, res) => {
   try {
     const { title, summary, description, tags } = req.body || {};
 
@@ -85,7 +86,7 @@ router.post("/", async (req, res) => {
 // @route               Delete /api/ideas/:id
 // @description         Delete single ideas
 // @access              PUBLIC
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", proctect, async (req, res, next) => {
   try {
     const { id } = req.params;
     // check if the id exists
@@ -109,7 +110,7 @@ router.delete("/:id", async (req, res, next) => {
 // @description         Update Data
 // @access              PUBLIC
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", proctect, async (req, res, next) => {
   try {
     const { id } = req.params;
 
